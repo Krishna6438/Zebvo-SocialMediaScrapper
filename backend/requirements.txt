@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+sqlalchemy
+pydantic
+requests
+deep-translator
+scikit-learn
+nltk
+pandas
+reportlab
