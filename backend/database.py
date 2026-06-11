@@ -9,7 +9,8 @@ import os
 DATABASE_URL = os.getenv("DATABASE_URL")
 if not DATABASE_URL:
     if os.getenv("VERCEL"):
-        DATABASE_URL = "sqlite:////tmp/passport_dashboard.db"
+        # Use an in-memory SQLite database on Vercel to completely bypass read-only filesystem issues
+        DATABASE_URL = "sqlite://"
     else:
         DATABASE_URL = "sqlite:///./passport_dashboard.db"
 
@@ -17,13 +18,15 @@ if not DATABASE_URL:
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
-connect_args = {}
+kwargs = {}
 if "sqlite" in DATABASE_URL:
-    connect_args = {"check_same_thread": False}
+    kwargs["connect_args"] = {"check_same_thread": False}
+    # For SQLite in-memory, we must use StaticPool to preserve the database connection
+    if DATABASE_URL == "sqlite://" or "memory" in DATABASE_URL:
+        from sqlalchemy.pool import StaticPool
+        kwargs["poolclass"] = StaticPool
 
-engine = create_engine(
-    DATABASE_URL, connect_args=connect_args
-)
+engine = create_engine(DATABASE_URL, **kwargs)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
