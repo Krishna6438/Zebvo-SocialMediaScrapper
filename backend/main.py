@@ -1,8 +1,13 @@
 import io
 import os
+import sys
 import time
 import threading
 import json
+
+# Add current directory to sys.path so imports resolve correctly when run as a Vercel serverless function
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
 from typing import Optional
