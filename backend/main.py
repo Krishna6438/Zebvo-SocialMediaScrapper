@@ -1,4 +1,5 @@
 import io
+import os
 import time
 import threading
 import json
@@ -30,17 +31,18 @@ async def lifespan(app: FastAPI):
     finally:
         db.close()
         
-    # Start periodic scraper in background thread (every 10 minutes)
-    def periodic_scraper():
-        while True:
-            time.sleep(600)
-            try:
-                scraper.run_scraper_cycle()
-            except Exception as e:
-                print(f"Error in background periodic scraper: {e}")
-                
-    t = threading.Thread(target=periodic_scraper, daemon=True)
-    t.start()
+    # Start periodic scraper in background thread (every 10 minutes) - skip on Vercel
+    if not os.getenv("VERCEL"):
+        def periodic_scraper():
+            while True:
+                time.sleep(600)
+                try:
+                    scraper.run_scraper_cycle()
+                except Exception as e:
+                    print(f"Error in background periodic scraper: {e}")
+                    
+        t = threading.Thread(target=periodic_scraper, daemon=True)
+        t.start()
     yield
 
 app = FastAPI(
@@ -175,6 +177,7 @@ def translate_post(post_id: int, lang: str, db: Session = Depends(get_db)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Translation failed: {str(e)}")
 
+@app.get("/api/scrape/trigger")
 @app.post("/api/scrape/trigger")
 def trigger_scrape(db: Session = Depends(get_db)):
     """Manually triggers the scraping cycle and returns the count of posts."""
