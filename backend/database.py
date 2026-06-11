@@ -6,7 +6,12 @@ from sqlalchemy.orm import sessionmaker
 
 import os
 
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./passport_dashboard.db")
+DATABASE_URL = os.getenv("DATABASE_URL")
+if not DATABASE_URL:
+    if os.getenv("VERCEL"):
+        DATABASE_URL = "sqlite:////tmp/passport_dashboard.db"
+    else:
+        DATABASE_URL = "sqlite:///./passport_dashboard.db"
 
 # Standardize postgres:// to postgresql:// for SQLAlchemy 1.4+ compatibility
 if DATABASE_URL.startswith("postgres://"):
